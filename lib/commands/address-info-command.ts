@@ -11,7 +11,7 @@ export class AddressInfoCommand implements CommandInterface {
 
   async run(): Promise<any> {
     const { scripthash } = detectAddressTypeToScripthash(this.address);
-    const balanceInfo = await this.electrumApi.getUnspentScripthash(scripthash);
+    const balanceInfo = await this.electrumApi.getUnspentAddress(this.address);
     const res = await this.electrumApi.atomicalsByScripthash(scripthash);
 
     let history = undefined;

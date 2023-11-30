@@ -10,7 +10,6 @@ export class GetUtxosCommand implements CommandInterface {
   }
 
   async run(): Promise<any> {
-    const { scripthash }  = detectAddressTypeToScripthash(this.address);
-    return this.electrumApi.getUnspentScripthash(scripthash);
+    return this.electrumApi.getUnspentAddress(this.address);
   }
 }

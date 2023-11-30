@@ -907,7 +907,7 @@ export class Atomicals implements APIInterface {
     }
   }
 
-  async searchContainers(prefix: string, asc = true, keepElectrumAlive = false): Promise<CommandResultInterface> {
+  async searchContainers(prefix: string, asc: boolean = true, keepElectrumAlive: boolean = false): Promise<CommandResultInterface> {
     try {
       await this.electrumApi.open();
       const command: CommandInterface = new SearchContainersCommand(this.electrumApi, prefix, asc);

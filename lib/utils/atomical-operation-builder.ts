@@ -25,6 +25,7 @@ const DEFAULT_SATS_ATOMICAL_UTXO = 1000;
 const SEND_RETRY_SLEEP_SECONDS = 15;
 const SEND_RETRY_ATTEMPTS = 20;
 const DUST_AMOUNT = 546;
+const CHANGE_AMOUNT_MINT = 2000;
 const BASE_BYTES = 10;
 const INPUT_BYTES_BASE = 148;
 const OUTPUT_BYTES_BASE = 34;
@@ -60,9 +61,7 @@ function logMiningProgressToConsole(dowork: boolean, disableMiningChalk, txid, n
         }
         return;
     }
-    process.stdout.clearLine(0);
-    process.stdout.cursorTo(0);
-    process.stdout.write(chalk.red(txid, ' nonces: ', nonces));
+    console.log(`random txid: ${txid}, nonces: ${nonces}`);
 }
 function printBitworkLog(bitworkInfo: BitworkInfo, commit?: boolean) {
     if (!bitworkInfo) {
@@ -562,9 +561,7 @@ export class AtomicalOperationBuilder {
                 // add a `true ||` at the front to test invalid minting
                 // console.log('this.bitworkInfoCommit?.prefix', this.bitworkInfoCommit)
                 if (performBitworkForCommitTx && hasValidBitwork(checkTxid, this.bitworkInfoCommit?.prefix as any, this.bitworkInfoCommit?.ext as any)) {
-                    process.stdout.clearLine(0);
-                    process.stdout.cursorTo(0);
-                    process.stdout.write(chalk.green(checkTxid, ' nonces: ' + noncesGenerated));
+                    console.log(`commit: ${checkTxid}, nonces: ${noncesGenerated}`);
                     console.log('\nBitwork matches commit txid! ', prelimTx.getId(), '@ time: ' + Math.floor(Date.now() / 1000))
                     // We found a solution, therefore broadcast it 
                     const interTx = psbtStart.extractTransaction();
@@ -720,9 +717,7 @@ export class AtomicalOperationBuilder {
             logMiningProgressToConsole(performBitworkForRevealTx, this.options.disableMiningChalk, checkTxid, noncesGenerated);
             let shouldBroadcast = !performBitworkForRevealTx;
             if (performBitworkForRevealTx && hasValidBitwork(checkTxid, this.bitworkInfoReveal?.prefix as any, this.bitworkInfoReveal?.ext as any)) {
-                process.stdout.clearLine(0);
-                process.stdout.cursorTo(0);
-                process.stdout.write(chalk.green(checkTxid, ' nonces: ' + noncesGenerated));
+                console.log(`reveal: ${checkTxid}, nonces: ${noncesGenerated}`);
                 console.log('\nBitwork matches reveal txid! ', revealTx.getId(), '@ time: ' + Math.floor(Date.now() / 1000))
                 shouldBroadcast = true;
             }
@@ -815,29 +810,79 @@ export class AtomicalOperationBuilder {
         return sum;
     }
 
-    calculateAmountRequiredForReveal(hashLockP2TROutputLen: number = 0): number {
-        const ARGS_BYTES = 20;
-        const BITWORK_BYTES = 5 + 10 + 4 + 10 + 4 + 10 + 1 + 10;
-        const EXTRA_BUFFER = 10;
+    calculateAmountRequiredForReveal(filesize: number = 0): number {
+        // Define initial base
+        let base = 100;
 
-        return (this.options.satsbyte as any) *
-            (BASE_BYTES +
-                ((1 + this.inputUtxos.length) * INPUT_BYTES_BASE) +
-                (this.additionalOutputs.length * OUTPUT_BYTES_BASE) +
-                OP_RETURN_BYTES +
-                ARGS_BYTES +
-                BITWORK_BYTES +
-                EXTRA_BUFFER +
-                hashLockP2TROutputLen
-            )
+        // Determine the length of e plus 3
+        let lengthAdjustment = 6;
+
+        // Multiply the floor of t/520 by 523
+        let l = 523 * Math.floor(filesize / 520);
+
+        // Determine t mod 520 and adjust l accordingly
+        let n = filesize % 520;
+        if (n < 76) {
+            l += 1;
+        } else if (n < 256) {
+            l += 2;
+        } else if (n < 65536) {
+            l += 3;
+        }
+
+        // Adjust l by n
+        l += n;
+
+        // Determine a as 1 + l
+        let a = 1 + l;
+
+        // Determine r as 41 + lengthAdjustment + a
+        let r = 41 + lengthAdjustment + a;
+
+        // Calculate c based on the value of r
+        let c = 0;
+        if (r < 253) {
+            c = 1;
+        } else if (r < 65536) {
+            c = 3;
+        } else if (r < 4294967296) {
+            c = 5;
+        } else {
+            c = 9;
+        }
+
+        // Adjust r by c
+        r += c;
+
+        // Adjust base by r
+        base += r;
+
+        let vsize = (378 + base) / 4;
+        return Math.ceil((this.options.satsbyte as any) * vsize - 1e-8);
+
+        // const ARGS_BYTES = 20;
+        // const BITWORK_BYTES = 5 + 10 + 4 + 10 + 4 + 10 + 1 + 10;
+        // const EXTRA_BUFFER = 10;
+        //
+        // return (this.options.satsbyte as any) *
+        //     (BASE_BYTES +
+        //         ((1 + this.inputUtxos.length) * INPUT_BYTES_BASE) +
+        //         (this.additionalOutputs.length * OUTPUT_BYTES_BASE) +
+        //         OP_RETURN_BYTES +
+        //         ARGS_BYTES +
+        //         BITWORK_BYTES +
+        //         EXTRA_BUFFER +
+        //         hashLockP2TROutputLen
+        //     )
     }
 
     calculateFeesRequiredForCommit(): number {
-        return (this.options.satsbyte as any) *
-            (BASE_BYTES +
-                (1 * INPUT_BYTES_BASE) +
-                (1 * OUTPUT_BYTES_BASE)
-            )
+        return Math.round(10.5 + 57.5 + 43) * (this.options.satsbyte as any);
+        // return (this.options.satsbyte as any) *
+        //     (BASE_BYTES +
+        //         (1 * INPUT_BYTES_BASE) +
+        //         (1 * OUTPUT_BYTES_BASE)
+        //     )
     }
 
     getAdditionalFundingRequiredForReveal(): number | null {
@@ -875,13 +920,14 @@ export class AtomicalOperationBuilder {
         if (currentSatoshisFeePlanned <= 0) {
             return;
         }
-        const excessSatoshisFound = currentSatoshisFeePlanned - revealFee;
+        const changeFee = Math.ceil((this.options.satsbyte as any) * 43 - 1e-8);
+        const excessSatoshisFound = currentSatoshisFeePlanned - revealFee - changeFee;
         // There were no excess satoshis, therefore no change is due
         if (excessSatoshisFound <= 0) {
             return;
         }
         // There were some excess satoshis, but let's verify that it meets the dust threshold to make change
-        if (excessSatoshisFound >= DUST_AMOUNT) {
+        if (excessSatoshisFound >= CHANGE_AMOUNT_MINT) {
             this.addOutput({
                 address: address,
                 value: excessSatoshisFound
@@ -903,13 +949,15 @@ export class AtomicalOperationBuilder {
             return;
         }
         const expectedFee = fee.commitFeeOnly;
+
+        const changeFee = Math.ceil((this.options.satsbyte as any) * 43 - 1e-8);
         // console.log('expectedFee', expectedFee);
-        const differenceBetweenCalculatedAndExpected = calculatedFee - expectedFee;
+        const differenceBetweenCalculatedAndExpected = calculatedFee - expectedFee - changeFee;
         if (differenceBetweenCalculatedAndExpected <= 0) {
             return;
         }
         // There were some excess satoshis, but let's verify that it meets the dust threshold to make change
-        if (differenceBetweenCalculatedAndExpected >= DUST_AMOUNT) {
+        if (differenceBetweenCalculatedAndExpected >= CHANGE_AMOUNT_MINT) {
             pbst.addOutput({
                 address: address,
                 value: differenceBetweenCalculatedAndExpected

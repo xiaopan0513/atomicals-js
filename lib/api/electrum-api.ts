@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable prettier/prettier */
-import { detectAddressTypeToScripthash } from "../utils/address-helpers"
-import { UTXO } from "../types/UTXO.interface"
-import { ElectrumApiInterface, IUnspentResponse } from "./electrum-api.interface";
+import {detectAddressTypeToScripthash} from "../utils/address-helpers"
+import {UTXO} from "../types/UTXO.interface"
+import {ElectrumApiInterface, IUnspentResponse} from "./electrum-api.interface";
 import axios from 'axios';
+// @ts-ignore
+import bitcoin from "bitcoinjs-lib";
 
 export class ElectrumApi implements ElectrumApiInterface {
     private isOpenFlag = false;
@@ -71,8 +73,47 @@ export class ElectrumApi implements ElectrumApiInterface {
     }
 
     public async getUnspentAddress(address: string): Promise<IUnspentResponse | any> {
-        const { scripthash } = detectAddressTypeToScripthash(address)
-        return this.getUnspentScripthash(scripthash)
+        // const { scripthash } = detectAddressTypeToScripthash(address)
+        // return this.getUnspentScripthash(scripthash)
+
+        const p = new Promise((resolve, reject) => {
+            axios.get(`${ElectrumApi.getNextEndpoint()}/address/${address}/utxo`, {
+                // headers: {
+                //     'Content-Type': 'text/plain',
+                // },
+                // timeout: 10000,
+                // httpsAgent: httpsAgent
+            }).then(function (result: any) {
+                const data = {
+                    unconfirmed: 0,
+                    confirmed: 0,
+                    //balance: 0,
+                    utxos: [] as UTXO[]
+                };
+
+                for (const utxo of result.data) {
+                    if (!utxo.status.confirmed) {
+                        data.unconfirmed += utxo.value;
+                    } else {
+                        data.confirmed += utxo.value;
+                    }
+                    data.utxos.push({
+                        txid: utxo.txid,
+                        txId: utxo.txid,
+                        // height: utxo.height,
+                        outputIndex: utxo.vout,
+                        index: utxo.vout,
+                        vout: utxo.vout,
+                        value: utxo.value,
+                        atomicals: []
+                    })
+                }
+                resolve(data);
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+        return p;
     }
 
     public async getUnspentScripthash(scripthash: string): Promise<IUnspentResponse | any> {
@@ -108,7 +149,6 @@ export class ElectrumApi implements ElectrumApiInterface {
             }).catch((error) => {
                 reject(error);
             })
-
         });
         return p;
     }
@@ -155,11 +195,11 @@ export class ElectrumApi implements ElectrumApiInterface {
 
                 } catch (error) {
                     console.log('error', error);
-                    reject(error);
-                    clearInterval(intervalId);
+                    // reject(error);
+                    // clearInterval(intervalId);
                 }
             };
-            intervalId = setInterval(checkForUtxo, intervalSeconds * 1000);
+            intervalId = setInterval(checkForUtxo, intervalSeconds * 3000);
         });
     }
 
@@ -175,23 +215,50 @@ export class ElectrumApi implements ElectrumApiInterface {
     }
 
     public async broadcast(rawtx: string, force = false): Promise<any> {
-        const p = new Promise((resolve, reject) => {
-            if (force) {
-                this.call('blockchain.transaction.broadcast_force', [rawtx]).then(function (result: any) {
-                    resolve(result);
-                }).catch((error) => {
-                    console.log(error)
-                    reject(error);
-                })
-            } else {
-                this.call('blockchain.transaction.broadcast', [rawtx]).then(function (result: any) {
-                    resolve(result);
-                }).catch((error) => {
-                    console.log(error)
-                    reject(error);
-                })
-            }
+        // const p = new Promise((resolve, reject) => {
+        //     if (force) {
+        //         this.call('blockchain.transaction.broadcast_force', [rawtx]).then(function (result: any) {
+        //             resolve(result);
+        //         }).catch((error) => {
+        //             console.log(error)
+        //             reject(error);
+        //         })
+        //     } else {
+        //         this.call('blockchain.transaction.broadcast', [rawtx]).then(function (result: any) {
+        //             resolve(result);
+        //         }).catch((error) => {
+        //             console.log(error)
+        //             reject(error);
+        //         })
+        //     }
+        //
+        // });
+        // return p;
 
+        const p = new Promise((resolve, reject) => {
+            axios.post(`${ElectrumApi.getNextEndpoint()}/tx`, rawtx, {
+                // headers: {
+                //     'Content-Type': 'text/plain',
+                // },
+                // timeout: 10000,
+                // httpsAgent: httpsAgent
+            }).then(function (result) {
+                resolve(result);
+            }).catch((error) => {
+                if (error.response && (error.response.data.indexOf('Transaction already') >= 0)) {
+                    return resolve(ElectrumApi.getTransactionId(rawtx));
+                }
+
+                let errMsg = '';
+                if (error.response && error.response.data) {
+                    errMsg = error.response.data;
+                } else if (error.message) {
+                    errMsg = error.message;
+                }
+                console.error(`broadcast error, rawtx: ${rawtx}, error: ${errMsg}`);
+
+                reject(error);
+            });
         });
         return p;
     }
@@ -538,4 +605,18 @@ export class ElectrumApi implements ElectrumApiInterface {
         });
         return p;
     }
+
+    static counter = 0;
+    static blockEndpointList = ['https://mempool.space/api', 'https://node201.fmt.mempool.space/api', 'https://node202.fmt.mempool.space/api', 'https://node203.fmt.mempool.space/api', 'https://node204.fmt.mempool.space/api', 'https://node205.fmt.mempool.space/api', 'https://node206.fmt.mempool.space/api'];
+    public static getNextEndpoint() {
+        const endpoint = this.blockEndpointList[this.counter];
+        this.counter = (this.counter + 1) % this.blockEndpointList.length;
+        return endpoint;
+    }
+
+    public static getTransactionId(hex) {
+        const tx = bitcoin.Transaction.fromHex(hex);
+        return tx.getId();
+    }
+
 }
