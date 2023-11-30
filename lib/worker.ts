@@ -8,17 +8,17 @@ async function mintDftInteractive() {
 
     while (true) {
         try {
-            // const result: any = await atomicals.mintDftInteractive(wallet.primary.address, 'rune', wallet.primary.WIF, {
-            //     satsbyte: 30
-            // });
-
-            const container = 'toothy';
-            const item = 'item-0';
-            const mainfest = '/root/atom-source/' + container + '/' + item + '.json';
-            const result: any = await atomicals.mintContainerItemInteractive(container, item, mainfest, wallet.primary.address, wallet.primary.WIF, wallet.primary, {
-                satsbyte: 100,
-                satsoutput: 1000
+            const result: any = await atomicals.mintDftInteractive(wallet.primary.address, 'electron', wallet.primary.WIF, {
+                satsbyte: 26
             });
+
+            // const container = 'toothy';
+            // const item = '0001';
+            // const mainfest = '/root/atom-source/' + container + '/' + item + '.json';
+            // const result: any = await atomicals.mintContainerItemInteractive(container, item, mainfest, wallet.primary.address, wallet.primary.WIF, wallet.primary, {
+            //     satsbyte: 100,
+            //     satsoutput: 1000
+            // });
 
             if (!result.success) {
                 console.log(`worker execute result fail, message: ${result.message}`);

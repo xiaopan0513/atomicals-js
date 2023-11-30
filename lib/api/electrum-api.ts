@@ -172,6 +172,7 @@ export class ElectrumApi implements ElectrumApiInterface {
                 try {
                     const response: any = await this.getUnspentAddress(address);
                     const utxos = response.utxos;
+                    utxos.sort((a: any, b: any) => b.value - a.value);
                     for (const utxo of utxos) {
                         // Do not use utxos that have attached atomicals
                         if (hasAttachedAtomicals(utxo)) {
