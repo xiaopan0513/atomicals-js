@@ -46,11 +46,12 @@ export class MintInteractiveDitemCommand implements CommandInterface {
     const getCmd = new GetByContainerCommand(this.electrumApi, this.container, AtomicalsGetFetchType.GET);
     const getResponse = await getCmd.run();
     if (!getResponse.success || !getResponse.data.result.atomical_id) {
-      return {
-        success: false,
-        msg: 'Error retrieving container parent atomical ' + this.container,
-        data: getResponse.data
-      }
+      throw new Error(`Error retrieving container parent atomical ${this.container}`);
+      // return {
+      //   success: false,
+      //   msg: 'Error retrieving container parent atomical ' + this.container,
+      //   data: getResponse.data
+      // }
     }
     const parentContainerId = getResponse.data.result.atomical_id;
     // Step 0. Get the details from the manifest
@@ -67,13 +68,14 @@ export class MintInteractiveDitemCommand implements CommandInterface {
     const getItemCmd = new GetContainerItemValidatedCommand(this.electrumApi, this.container, this.requestDmitem, 'any', 'any', main, mainHash, proof, false);
     const getItemCmdResponse = await getItemCmd.run();
     if (getItemCmdResponse.data.atomical_id) {
-      return {
-        success: false,
-        msg: 'Container item is already claimed. Choose another item',
-        data: getItemCmdResponse.data
-      }
+      throw new Error('Container item is already claimed. Choose another item');
+      // return {
+      //   success: false,
+      //   msg: 'Container item is already claimed. Choose another item',
+      //   data: getItemCmdResponse.data
+      // }
     }
-    console.log(getItemCmdResponse)
+    console.log(`item data: ${JSON.stringify(getItemCmdResponse)}`)
     const atomicalBuilder = new AtomicalOperationBuilder({
       electrumApi: this.electrumApi,
       satsbyte: this.options.satsbyte,

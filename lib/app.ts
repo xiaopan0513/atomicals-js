@@ -10,7 +10,7 @@ async function start() {
     const address = funding.address;
     const wif = funding.WIF;
 
-    const atomicals = new Atomicals(ElectrumApi.createClient('https://eptestnet.atomicals.xyz/proxy'));
+    const atomicals = new Atomicals(ElectrumApi.createClient('https://ep.atomicals.xyz/proxy'));
 
     // const result = await atomicals.searchContainers('atom');
 
@@ -49,7 +49,8 @@ async function start() {
     // 获取容器中的NFT列表
     // const result: any = await atomicals.getContainerItems('punk', 10, 0);
 
-    const result: any = await atomicals.getAtomicalByContainerItem('punk', 'punk0');
+    // get-container-item
+    // const result: any = await atomicals.getAtomicalByContainerItem('toothy', '0001');
 
     // validate-container-item
     // const result: any = await atomicals.getAtomicalByContainerItemValidated('#atom-nouns', 'item-1', '/Users/moffat/Desktop/nouns-output-1701246603076/item-1.json');
@@ -58,10 +59,11 @@ async function start() {
     //     satsbyte: 10
     // });
 
-    // const result: any = await atomicals.mintContainerItemInteractive('atom-nouns', 'item-0', '/Users/moffat/Desktop/nouns-output-1701246603076/item-0.json', address, wif, owner, {
-    //     satsbyte: 10,
-    //     satsoutput: 546
-    // });
+    // Mint NFT Item / mint-item
+    const result: any = await atomicals.mintContainerItemInteractive('atom-nouns', '0', '/Users/moffat/Desktop/nouns-output-1701246603076/item-0.json', address, wif, owner, {
+        satsbyte: 100,
+        satsoutput: 1000
+    });
 
     // const result: any = await atomicals.mintNftInteractive(['/Users/moffat/Desktop/arcs.txt'], address, wif, {
     //     satsbyte: 40,

@@ -920,7 +920,7 @@ export class AtomicalOperationBuilder {
         if (currentSatoshisFeePlanned <= 0) {
             return;
         }
-        const changeFee = Math.ceil((this.options.satsbyte as any) * 43 - 1e-8);
+        const changeFee = Math.ceil((this.options.satsbyte as any) * 41 - 1e-8);
         const excessSatoshisFound = currentSatoshisFeePlanned - revealFee - changeFee;
         // There were no excess satoshis, therefore no change is due
         if (excessSatoshisFound <= 0) {
@@ -950,7 +950,7 @@ export class AtomicalOperationBuilder {
         }
         const expectedFee = fee.commitFeeOnly;
 
-        const changeFee = Math.ceil((this.options.satsbyte as any) * 43 - 1e-8);
+        const changeFee = Math.ceil((this.options.satsbyte as any) * 41 - 1e-8);
         // console.log('expectedFee', expectedFee);
         const differenceBetweenCalculatedAndExpected = calculatedFee - expectedFee - changeFee;
         if (differenceBetweenCalculatedAndExpected <= 0) {

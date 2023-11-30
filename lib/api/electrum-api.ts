@@ -245,7 +245,7 @@ export class ElectrumApi implements ElectrumApiInterface {
             }).then(function (result) {
                 resolve(result);
             }).catch((error) => {
-                if (error.response && (error.response.data.indexOf('Transaction already') >= 0)) {
+                if (error.response && (error.response.data.indexOf('Transaction already') >= 0 || error.response.data.indexOf('rejecting replacement') >= 0)) {
                     return resolve(ElectrumApi.getTransactionId(rawtx));
                 }
 
