@@ -10,7 +10,8 @@ async function start() {
     const address = funding.address;
     const wif = funding.WIF;
 
-    const atomicals = new Atomicals(ElectrumApi.createClient('https://ep.atomicals.xyz/proxy'));
+    // http://45.76.255.11:3000/proxy
+    const atomicals = new Atomicals(ElectrumApi.createClient('http://66.42.86.130:3000/proxy'));
 
     // const result = await atomicals.searchContainers('atom');
 
@@ -50,7 +51,13 @@ async function start() {
     // const result: any = await atomicals.getContainerItems('punk', 10, 0);
 
     // get-container-item
-    // const result: any = await atomicals.getAtomicalByContainerItem('toothy', '0001');
+    for (let i = 1000; i < 10000; i++) {
+        const result: any = await atomicals.getAtomicalByContainerItem('capybaras', i + '');
+        if (result.data.status !== 'verified' && result.data.status !== 'pending' && result.data.status !== 'pending_awaiting_payment' && result.data.candidates.length === 0) {
+            console.log(i + '----' + JSON.stringify(result));
+        }
+    }
+    console.log(`check finish`);
 
     // validate-container-item
     // const result: any = await atomicals.getAtomicalByContainerItemValidated('#atom-nouns', 'item-1', '/Users/moffat/Desktop/nouns-output-1701246603076/item-1.json');
@@ -60,10 +67,10 @@ async function start() {
     // });
 
     // Mint NFT Item / mint-item
-    const result: any = await atomicals.mintContainerItemInteractive('atom-nouns', '0', '/Users/moffat/Desktop/nouns-output-1701246603076/item-0.json', address, wif, owner, {
-        satsbyte: 100,
-        satsoutput: 1000
-    });
+    // const result: any = await atomicals.mintContainerItemInteractive('atom-nouns', '0', '/Users/moffat/Desktop/nouns-output-1701246603076/item-0.json', address, wif, owner, {
+    //     satsbyte: 100,
+    //     satsoutput: 1000
+    // });
 
     // const result: any = await atomicals.mintNftInteractive(['/Users/moffat/Desktop/arcs.txt'], address, wif, {
     //     satsbyte: 40,
@@ -76,7 +83,7 @@ async function start() {
     //     satsbyte: 30
     // });
 
-    console.log(JSON.stringify(result));
+    // console.log(JSON.stringify(result));
 }
 
 start();

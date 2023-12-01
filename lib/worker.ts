@@ -9,14 +9,14 @@ async function mintDftInteractive() {
     while (true) {
         try {
             const result: any = await atomicals.mintDftInteractive(wallet.primary.address, 'electron', wallet.primary.WIF, {
-                satsbyte: 26
+                satsbyte: 25
             });
 
             // const container = 'toothy';
-            // const item = '0001';
-            // const mainfest = '/root/atom-source/' + container + '/' + item + '.json';
+            // const item = '367';
+            // const mainfest = '/root/atom-source/' + container + '/item-' + item + '.json';
             // const result: any = await atomicals.mintContainerItemInteractive(container, item, mainfest, wallet.primary.address, wallet.primary.WIF, wallet.primary, {
-            //     satsbyte: 100,
+            //     satsbyte: 150,
             //     satsoutput: 1000
             // });
 

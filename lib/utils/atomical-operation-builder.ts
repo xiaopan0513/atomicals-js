@@ -557,7 +557,7 @@ export class AtomicalOperationBuilder {
                 let prelimTx = psbtStart.extractTransaction();
                 const checkTxid = prelimTx.getId();
 
-                logMiningProgressToConsole(performBitworkForCommitTx, this.options.disableMiningChalk, checkTxid, noncesGenerated);
+                // logMiningProgressToConsole(performBitworkForCommitTx, this.options.disableMiningChalk, checkTxid, noncesGenerated);
                 // add a `true ||` at the front to test invalid minting
                 // console.log('this.bitworkInfoCommit?.prefix', this.bitworkInfoCommit)
                 if (performBitworkForCommitTx && hasValidBitwork(checkTxid, this.bitworkInfoCommit?.prefix as any, this.bitworkInfoCommit?.ext as any)) {
@@ -877,7 +877,7 @@ export class AtomicalOperationBuilder {
     }
 
     calculateFeesRequiredForCommit(): number {
-        return Math.round(10.5 + 57.5 + 43) * (this.options.satsbyte as any);
+        return Math.round(10.5 + 57.5 + 43) * (this.options.satsbyte as any) * 1.5;
         // return (this.options.satsbyte as any) *
         //     (BASE_BYTES +
         //         (1 * INPUT_BYTES_BASE) +
@@ -899,6 +899,7 @@ export class AtomicalOperationBuilder {
         const commitAndRevealFee = commitFee + revealFee;
         const commitAndRevealFeePlusOutputs = commitFee + revealFee + this.totalOutputSum();
         const revealFeePlusOutputs = revealFee + this.totalOutputSum();
+        console.log(`calculate fees, revealFee: ${revealFee}, commitFee: ${commitFee}, outputSum: ${this.totalOutputSum()}`);
         const ret = {
             commitAndRevealFee,
             commitAndRevealFeePlusOutputs,
@@ -920,7 +921,7 @@ export class AtomicalOperationBuilder {
         if (currentSatoshisFeePlanned <= 0) {
             return;
         }
-        const changeFee = Math.ceil((this.options.satsbyte as any) * 38 - 1e-8);
+        const changeFee = Math.ceil((this.options.satsbyte as any) * 43);
         const excessSatoshisFound = currentSatoshisFeePlanned - revealFee - changeFee;
         // There were no excess satoshis, therefore no change is due
         if (excessSatoshisFound <= 0) {
@@ -928,6 +929,7 @@ export class AtomicalOperationBuilder {
         }
         // There were some excess satoshis, but let's verify that it meets the dust threshold to make change
         if (excessSatoshisFound >= CHANGE_AMOUNT_MINT) {
+            console.log(`add commit change value: ${excessSatoshisFound}`);
             this.addOutput({
                 address: address,
                 value: excessSatoshisFound
@@ -950,7 +952,7 @@ export class AtomicalOperationBuilder {
         }
         const expectedFee = fee.commitFeeOnly;
 
-        const changeFee = Math.ceil((this.options.satsbyte as any) * 38 - 1e-8);
+        const changeFee = Math.ceil((this.options.satsbyte as any) * 43);
         // console.log('expectedFee', expectedFee);
         const differenceBetweenCalculatedAndExpected = calculatedFee - expectedFee - changeFee;
         if (differenceBetweenCalculatedAndExpected <= 0) {
@@ -958,6 +960,7 @@ export class AtomicalOperationBuilder {
         }
         // There were some excess satoshis, but let's verify that it meets the dust threshold to make change
         if (differenceBetweenCalculatedAndExpected >= CHANGE_AMOUNT_MINT) {
+            console.log(`add commit change value: ${differenceBetweenCalculatedAndExpected}`);
             pbst.addOutput({
                 address: address,
                 value: differenceBetweenCalculatedAndExpected
