@@ -877,7 +877,7 @@ export class AtomicalOperationBuilder {
     }
 
     calculateFeesRequiredForCommit(): number {
-        return Math.round(10.5 + 57.5 + 43) * (this.options.satsbyte as any) * 1.5;
+        return Math.round(10.5 + 57.5 + 43) * (this.options.satsbyte as any);
         // return (this.options.satsbyte as any) *
         //     (BASE_BYTES +
         //         (1 * INPUT_BYTES_BASE) +
@@ -929,7 +929,6 @@ export class AtomicalOperationBuilder {
         }
         // There were some excess satoshis, but let's verify that it meets the dust threshold to make change
         if (excessSatoshisFound >= CHANGE_AMOUNT_MINT) {
-            console.log(`add commit change value: ${excessSatoshisFound}`);
             this.addOutput({
                 address: address,
                 value: excessSatoshisFound
@@ -960,7 +959,6 @@ export class AtomicalOperationBuilder {
         }
         // There were some excess satoshis, but let's verify that it meets the dust threshold to make change
         if (differenceBetweenCalculatedAndExpected >= CHANGE_AMOUNT_MINT) {
-            console.log(`add commit change value: ${differenceBetweenCalculatedAndExpected}`);
             pbst.addOutput({
                 address: address,
                 value: differenceBetweenCalculatedAndExpected
