@@ -557,7 +557,7 @@ export class AtomicalOperationBuilder {
                 let prelimTx = psbtStart.extractTransaction();
                 const checkTxid = prelimTx.getId();
 
-                // logMiningProgressToConsole(performBitworkForCommitTx, this.options.disableMiningChalk, checkTxid, noncesGenerated);
+                logMiningProgressToConsole(performBitworkForCommitTx, this.options.disableMiningChalk, checkTxid, noncesGenerated);
                 // add a `true ||` at the front to test invalid minting
                 // console.log('this.bitworkInfoCommit?.prefix', this.bitworkInfoCommit)
                 if (performBitworkForCommitTx && hasValidBitwork(checkTxid, this.bitworkInfoCommit?.prefix as any, this.bitworkInfoCommit?.ext as any)) {

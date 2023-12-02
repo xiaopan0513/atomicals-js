@@ -1,7 +1,7 @@
 import {Atomicals, ElectrumApi} from "./index";
 import {jsonFileReader} from "./utils/file-utils";
 
-const atomicals = new Atomicals(ElectrumApi.createClient('http://45.76.255.11:3000/proxy'));
+const atomicals = new Atomicals(ElectrumApi.createClient('http://10.6.96.3:3000/proxy'));
 
 async function mintDftInteractive() {
     const wallet: any = await jsonFileReader('./wallet.json');
